@@ -52,6 +52,13 @@ class MicroInterpreter {
                    MicroResourceVariables* resource_variables = nullptr,
                    MicroProfilerInterface* profiler = nullptr);
 
+  // Add Conflict Initializer
+  MicroInterpreter(const Model* model, const MicroOpResolver& op_resolver,
+                   uint8_t* tensor_arena, size_t tensor_arena_size,
+                   const int conflict_data[][3], const int conflict_data_count,
+                   MicroResourceVariables* resource_variables = nullptr,
+                   MicroProfilerInterface* profiler = nullptr);
+
   // Create an interpreter instance using an existing MicroAllocator instance.
   // This constructor should be used when creating an allocator that needs to
   // have allocation handled in more than one interpreter or for recording

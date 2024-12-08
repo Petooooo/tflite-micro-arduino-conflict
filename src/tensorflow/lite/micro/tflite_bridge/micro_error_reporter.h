@@ -29,7 +29,7 @@ class MicroErrorReporter : public ErrorReporter {
   int Report(const char* format, va_list args) override;
 
  private:
-  TF_LITE_REMOVE_VIRTUAL_DELETE
+  //TF_LITE_REMOVE_VIRTUAL_DELETE
 };
 
 }  // namespace tflite

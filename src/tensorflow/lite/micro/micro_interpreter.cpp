@@ -55,6 +55,26 @@ MicroInterpreter::MicroInterpreter(const Model* model,
 
 MicroInterpreter::MicroInterpreter(const Model* model,
                                    const MicroOpResolver& op_resolver,
+                                   uint8_t* tensor_arena,
+                                   size_t tensor_arena_size,
+                                   const int conflict_data[][3], const int conflict_data_count,
+                                   MicroResourceVariables* resource_variables,
+                                   MicroProfilerInterface* profiler)
+    : model_(model),
+      op_resolver_(op_resolver),
+      allocator_(*MicroAllocator::Create(tensor_arena, tensor_arena_size, conflict_data, conflict_data_count)),
+
+      graph_(&context_, model, &allocator_, resource_variables),
+      tensors_allocated_(false),
+      initialization_status_(kTfLiteError),
+      input_tensors_(nullptr),
+      output_tensors_(nullptr),
+      micro_context_(&allocator_, model_, &graph_) {
+  Init(profiler);
+}
+
+MicroInterpreter::MicroInterpreter(const Model* model,
+                                   const MicroOpResolver& op_resolver,
                                    MicroAllocator* allocator,
                                    MicroResourceVariables* resource_variables,
                                    MicroProfilerInterface* profiler)

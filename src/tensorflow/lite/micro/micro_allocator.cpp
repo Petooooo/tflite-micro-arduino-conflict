@@ -27,7 +27,7 @@ limitations under the License.
 #include "tensorflow/lite/micro/compatibility.h"
 #include "tensorflow/lite/micro/flatbuffer_utils.h"
 #include "tensorflow/lite/micro/memory_helpers.h"
-#include "tensorflow/lite/micro/memory_planner/greedy_memory_planner.h"
+#include "tensorflow/lite/micro/memory_planner/my_memory_planner.h"
 #include "tensorflow/lite/micro/memory_planner/micro_memory_planner.h"
 #include "tensorflow/lite/micro/micro_allocation_info.h"
 #include "tensorflow/lite/micro/micro_arena_constants.h"
@@ -340,7 +340,7 @@ size_t MicroAllocator::GetDefaultTailUsage(bool is_memory_planner_given) {
                       AlignSizeUp<MicroBuiltinDataAllocator>() +
                       AlignSizeUp<SubgraphAllocations>();
   if (!is_memory_planner_given) {
-    total_size += AlignSizeUp<GreedyMemoryPlanner>();
+    total_size += AlignSizeUp<MyMemoryPlanner>();
   }
   return total_size;
 }
@@ -385,9 +385,28 @@ MicroAllocator* MicroAllocator::Create(uint8_t* tensor_arena,
   // By default create GreedyMemoryPlanner.
   // If a different MemoryPlanner is needed, use the other api.
   uint8_t* memory_planner_buffer = memory_allocator->AllocatePersistentBuffer(
-      sizeof(GreedyMemoryPlanner), alignof(GreedyMemoryPlanner));
-  GreedyMemoryPlanner* memory_planner =
-      new (memory_planner_buffer) GreedyMemoryPlanner();
+      sizeof(MyMemoryPlanner), alignof(MyMemoryPlanner));
+  MyMemoryPlanner* memory_planner =
+      new (memory_planner_buffer) MyMemoryPlanner();
+
+  return Create(memory_allocator, memory_planner);
+}
+
+// Add Conflict Initializer
+MicroAllocator* MicroAllocator::Create(uint8_t* tensor_arena,
+                                       size_t arena_size, const int conflict_data[][3], const int conflict_data_count) {
+  uint8_t* aligned_arena =
+      AlignPointerUp(tensor_arena, MicroArenaBufferAlignment());
+  size_t aligned_arena_size = tensor_arena + arena_size - aligned_arena;
+  SingleArenaBufferAllocator* memory_allocator =
+      SingleArenaBufferAllocator::Create(aligned_arena, aligned_arena_size);
+
+  // By default create GreedyMemoryPlanner.
+  // If a different MemoryPlanner is needed, use the other api.
+  uint8_t* memory_planner_buffer = memory_allocator->AllocatePersistentBuffer(
+      sizeof(MyMemoryPlanner), alignof(MyMemoryPlanner));
+  MyMemoryPlanner* memory_planner =
+      new (memory_planner_buffer) MyMemoryPlanner(conflict_data, conflict_data_count);
 
   return Create(memory_allocator, memory_planner);
 }
@@ -423,9 +442,9 @@ MicroAllocator* MicroAllocator::Create(uint8_t* persistent_tensor_arena,
 
   uint8_t* memory_planner_buffer =
       persistent_buffer_allocator->AllocatePersistentBuffer(
-          sizeof(GreedyMemoryPlanner), alignof(GreedyMemoryPlanner));
-  GreedyMemoryPlanner* memory_planner =
-      new (memory_planner_buffer) GreedyMemoryPlanner();
+          sizeof(MyMemoryPlanner), alignof(MyMemoryPlanner));
+  MyMemoryPlanner* memory_planner =
+      new (memory_planner_buffer) MyMemoryPlanner();
 
   uint8_t* micro_allocator_buffer =
       persistent_buffer_allocator->AllocatePersistentBuffer(
@@ -865,9 +884,9 @@ TfLiteStatus MicroAllocator::CommitStaticMemoryPlan(
       non_persistent_buffer_allocator_->DeallocateResizableBuffer(
           scratch_buffer_head_));
 
-#ifdef TF_LITE_SHOW_MEMORY_USE
+// #ifdef TF_LITE_SHOW_MEMORY_USE
   memory_planner_->PrintMemoryPlan();
-#endif
+// #endif
   head_usage = memory_planner_->GetMaximumMemorySize();
 
   // The head is used to store memory plans for one model at a time during the

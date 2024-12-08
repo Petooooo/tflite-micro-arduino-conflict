@@ -30,7 +30,7 @@ inline void TransposeConv(
     const int8_t* filter_data, const RuntimeShape& bias_shape,
     const int32_t* bias_data, const RuntimeShape& output_shape,
     int8_t* output_data, const RuntimeShape& im2col_shape, int8_t* im2col_data,
-    int32_t* scratch_buffer) {
+    int16_t* scratch_buffer) {
   const int stride_width = params.stride_width;
   const int stride_height = params.stride_height;
   const int pad_width = params.padding_values.width;
@@ -62,7 +62,7 @@ inline void TransposeConv(
   const int num_elements = output_shape.FlatSize();
   // We need to initialize scratch_buffer to all 0s, as we apply the same
   // 'scatter' based trick as in float version.
-  memset(scratch_buffer, 0, num_elements * sizeof(int32_t));
+  memset(scratch_buffer, 0, num_elements * sizeof(int16_t));
 
   // Loop through input elements one at a time.
   for (int batch = 0; batch < batches; ++batch) {

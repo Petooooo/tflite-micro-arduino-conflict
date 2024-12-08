@@ -118,6 +118,10 @@ class MicroAllocator {
   // bytes aligned, otherwise some head room will be wasted.
   // TODO(b/157615197): Cleanup constructor + factory usage.
   static MicroAllocator* Create(uint8_t* tensor_arena, size_t arena_size);
+  
+  // Add Conflict Initializer
+  static MicroAllocator* Create(uint8_t* tensor_arena, size_t arena_size,
+                                const int conflict_data[][3], const int conflict_data_count);
 
   // Creates a MicroAllocator instance from a given tensor arena and a given
   // MemoryPlanner. This arena will be managed by the created instance. Note:

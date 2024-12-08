@@ -186,7 +186,7 @@ TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
     TFLITE_DCHECK(context->RequestScratchBufferInArena != nullptr);
     TFLITE_DCHECK(context->RequestScratchBufferInArena(
                       context,
-                      GetTensorShape(output).FlatSize() * sizeof(int32_t),
+                      GetTensorShape(output).FlatSize() * sizeof(int16_t),
                       &(data->scratch_buffer_index)) == kTfLiteOk);
   }
 
@@ -281,7 +281,7 @@ TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
       break;
     }
     case kTfLiteInt8: {
-      int32_t* scratch_buffer = static_cast<int32_t*>(
+      int16_t* scratch_buffer = static_cast<int16_t*>(
           context->GetScratchBuffer(context, data.scratch_buffer_index));
       reference_integer_ops::TransposeConv(
           data.params, data.per_channel_output_multiplier,

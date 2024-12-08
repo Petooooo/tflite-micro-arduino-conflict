@@ -16,6 +16,12 @@ limitations under the License.
 #undef I2S_NRF52840_DEBUG
 #undef I2S_NRF52840_DEBUG_INT
 
+#if defined(ARDUINO) && !defined(ARDUINO_ARDUINO_NANO33BLE)
+#define ARDUINO_EXCLUDE_CODE
+#endif  // defined(ARDUINO) && !defined(ARDUINO_ARDUINO_NANO33BLE)
+
+#ifndef ARDUINO_EXCLUDE_CODE
+
 #include "i2s_nrf52840.h"
 
 #include <Arduino.h>
@@ -784,3 +790,5 @@ bool I2S_nrf52840::SameBufferSegment(const uint8_t* a, const uint8_t* b) const {
 }
 
 }  // namespace peripherals
+
+#endif

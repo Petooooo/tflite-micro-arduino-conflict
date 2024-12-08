@@ -57,10 +57,22 @@ constexpr pin_size_t kLED_DEFAULT_GPIO = D13;
 
 }  // namespace peripherals
 
-#else  // ARDUINO_ARDUINO_NANO33BLE
+#elif defined(ARDUINO_NICLA_VISION) || defined(ARDUINO_PORTENTA_H7_M4)
+
+namespace peripherals {
+
+constexpr uint32_t kI2C_CLOCK = 100000;
+
+constexpr pin_size_t kBUTTON_GPIO = D8;
+
+constexpr pin_size_t kLED_DEFAULT_GPIO = D13;
+
+}  // namespace peripherals
+
+#else  // ARDUINO_ARDUINO_NANO33BLE || ARDUINO_NICLA_VISION
 #error "unsupported board"
 
-#endif  // ARDUINO_ARDUINO_NANO33BLE
+#endif  // ARDUINO_ARDUINO_NANO33BLE || ARDUINO_NICLA_VISION
 
 #endif  // ARDUINO
 
