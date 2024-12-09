@@ -275,13 +275,13 @@ void MyMemoryPlanner::CalculateOffsetsIfNeeded() {
         }
     }
 
-    // conflict 버퍼들을 BFS로 정렬
-    SortConflictTensorsBFS(&buffer_ids_sorted_[idx_from_tail], &buffer_sizes_sorted_[idx_from_tail], conflict_count);
-
-    // non-conflict 버퍼들을 크기 순으로 정렬 (tail에서부터 배치)
+    // non-conflict 버퍼들을 크기 순으로 정렬
     ReverseSortInPlace(&buffer_sizes_sorted_[idx_from_head],
                        &buffer_ids_sorted_[idx_from_head],
                        non_conflict_count);
+
+    // conflict 버퍼들을 BFS로 정렬 (tail에서부터 배치)
+    SortConflictTensorsBFS(&buffer_ids_sorted_[idx_from_tail], &buffer_sizes_sorted_[idx_from_tail], conflict_count);
 
     // 이후 버퍼 배치 로직
     first_entry_index_ = 0;
@@ -303,7 +303,7 @@ void MyMemoryPlanner::CalculateOffsetsIfNeeded() {
         const int wanted_last_time_used = wanted_requirements->last_time_used;
 
         int candidate_offset = 0;
-        if (wanted_requirements->offline_offset == -1) {
+        if (wanted_requirements->offline_offset == kOnlinePlannedBuffer) {
             ListEntry* prior_entry = nullptr;
             while (true) {
                 ListEntry* next_entry = NextSimultaneouslyActiveBuffer(
@@ -316,12 +316,14 @@ void MyMemoryPlanner::CalculateOffsetsIfNeeded() {
                     auto conflict_it = conflicts_.find({buffer_id, prior_entry->requirements_index});
                     if (conflict_it != conflicts_.end()) {
                         int l_value = conflict_it->second;  // conflict의 l 값
-                        candidate_offset = prior_entry->offset + l_value;  // l을 추가하여 간격 확보
+                        int conflict_offset = prior_entry->offset + l_value;  // l을 추가하여 간격 확보
+                        if (conflict_offset > candidate_offset) {
+                          candidate_offset = conflict_offset;
+                        }
                     } else if (prior_entry_offset > candidate_offset) {
                         candidate_offset = prior_entry_offset;  // 일반적인 겹침 처리
                     }
                 }
-
                 if (next_entry == nullptr) {
                     break;
                 }
@@ -398,7 +400,7 @@ void MyMemoryPlanner::PrintMemoryPlan() {
   MicroPrintf("\n==========================================================================================\n");
 
   // 메모리 레이아웃을 시각적으로 표현
-  constexpr int kLineWidth = 80;
+  constexpr int kLineWidth = 120;
   int max_size = kLineWidth;
   int max_time = 0;
 
@@ -453,7 +455,7 @@ void MyMemoryPlanner::PrintMemoryPlan() {
         if (line[n] == '.') {
           line[n] = GetOrdinalCharacter(i);
         } else {
-          line[n] = '!'; // 충돌을 시각적으로 나타냄
+          line[n] = '!'; // 기존에 텐서가 배치되어 있는 경우 (Conflict 출력)
         }
       }
     }
